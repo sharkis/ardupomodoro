@@ -1,10 +1,9 @@
 #include <Arduboy2.h>
-#define POMODORO_LENGTH 1500000
+#define POMODORO_LENGTH (1000 * 60 * 25)
 Arduboy2 arduboy;
 unsigned long start = 0;
 unsigned long elapsed = 0;
-unsigned long elapsed_last = 0;
-unsigned long elapsed_delta = 0;
+unsigned long last_mod = 0;
 bool running = false;
 bool onBreak = false;
 
@@ -15,10 +14,13 @@ void setup() {
 }
 
 void loop() {
+  // put your main code here, to run repeatedly:
   unsigned long curTime = millis();
+  unsigned long mod = elapsed % POMODORO_LENGTH;
   int hours = elapsed / 1000 / 60 / 60;
   int minutes = (elapsed - hours * 3600000) / 1000 / 60;
   float seconds = (elapsed - (hours * 3600000) - (minutes * 60000)) / 1000.0;
+  
   // press a to stop/start
   arduboy.pollButtons();
 
@@ -37,9 +39,14 @@ void loop() {
     seconds = 0.0;
     running = false;
   }
+  if(mod < last_mod){
+    running = false;
+    last_mod = mod;
+  }
   if (running) {
     elapsed += curTime - start;
     start = curTime;
+    last_mod = mod;
   }
 
   arduboy.clear();
@@ -53,7 +60,7 @@ void loop() {
   arduboy.print(F("Pomodoros: "));
   render_pomodoros(elapsed);
   arduboy.display();
-  // put your main code here, to run repeatedly:
+  
 }
 
 void render_pomodoros(unsigned long duration) {
